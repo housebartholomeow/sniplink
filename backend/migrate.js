@@ -26,7 +26,7 @@ async function runMigrations() {
     const db = drizzle(client);
     
     console.log("3. Pushing migrations from ./drizzle folder...");
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await migrate(db, { migrationsFolder: './src/db/drizzle' });
     
     console.log("✅ SUCCESS: Migrations completed!");
     process.exit(0);
