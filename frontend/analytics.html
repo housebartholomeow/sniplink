@@ -30,7 +30,7 @@
   .page-title { font-size: 22px; font-weight: 600; }
   .page-sub { font-size: 14px; color: #888; margin-top: 2px; }
   .filter-row { display: flex; gap: 8px; }
-  .filter-btn { height: 34px; padding: 0 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 13px; color: #666; cursor: pointer; font-family: inherit; }
+  .filter-btn { height: 34px; padding: 0 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 13px; color: #666; cursor: pointer; font-family: inherit; transition: all 0.2s; }
   .filter-btn.active { background: #185fa5; color: #fff; border-color: #185fa5; }
   .filter-btn:hover:not(.active) { border-color: #aaa; }
 
@@ -76,10 +76,6 @@
   </a>
   <div class="nav-links">
     <a class="nav-link active" href="analytics.html">Analytics</a>
-    <a class="nav-link" href="pricing.html">Pricing</a>
-    
-    <a class="nav-link" href="login.html" style="border:1px solid #185fa5; color:#185fa5; padding:6px 14px; border-radius:8px; font-weight:500;">Log in</a>
-    <button class="btn-primary" onclick="location.href='signup.html'">Sign up free</button>
   </div>
 </nav>
 
@@ -89,7 +85,7 @@
       <div class="page-title">Analytics</div>
       <div class="page-sub">Track performance across all your links</div>
     </div>
-    <div class="filter-row">
+    <div class="filter-row" id="time-filters">
       <button class="filter-btn">7 days</button>
       <button class="filter-btn active">30 days</button>
       <button class="filter-btn">90 days</button>
@@ -100,23 +96,23 @@
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-label"><i class="ti ti-click"></i> Total clicks</div>
-      <div class="stat-value">8,431</div>
-      <div class="stat-change up"><i class="ti ti-trending-up"></i> +14% vs last period</div>
+      <div class="stat-value" id="val-clicks">8,431</div>
+      <div class="stat-change up"><i class="ti ti-trending-up"></i> <span class="change-text">+14% vs last period</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><i class="ti ti-link"></i> Active links</div>
-      <div class="stat-value">142</div>
-      <div class="stat-change up"><i class="ti ti-trending-up"></i> +12 new this period</div>
+      <div class="stat-value" id="val-links">142</div>
+      <div class="stat-change up"><i class="ti ti-trending-up"></i> <span class="change-text">+12 new this period</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><i class="ti ti-users"></i> Unique visitors</div>
-      <div class="stat-value">5,209</div>
-      <div class="stat-change up"><i class="ti ti-trending-up"></i> +8% vs last period</div>
+      <div class="stat-value" id="val-visitors">5,209</div>
+      <div class="stat-change up"><i class="ti ti-trending-up"></i> <span class="change-text">+8% vs last period</span></div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><i class="ti ti-pointer"></i> Avg CTR</div>
-      <div class="stat-value">59%</div>
-      <div class="stat-change up"><i class="ti ti-trending-up"></i> +11% vs last period</div>
+      <div class="stat-value" id="val-ctr">59%</div>
+      <div class="stat-change up"><i class="ti ti-trending-up"></i> <span class="change-text">+11% vs last period</span></div>
     </div>
   </div>
 
@@ -153,13 +149,7 @@
       <div class="table-row"><span><span class="country-flag">🇧🇷</span>Brazil</span><span style="color:#888;">590 <span style="font-size:11px;">7%</span></span></div>
     </div>
     <div class="table-card" id="top-links-container">
-      <div class="table-header">Top links</div>
-      <div class="table-row"><span class="link-cell">snip.lk/x8fQr2</span><span style="color:#888;">1,204 clicks</span></div>
-      <div class="table-row"><span class="link-cell">snip.lk/fig-ds</span><span style="color:#888;">382 clicks</span></div>
-      <div class="table-row"><span class="link-cell">snip.lk/roadmap</span><span style="color:#888;">97 clicks</span></div>
-      <div class="table-row"><span class="link-cell">snip.lk/meetQ2</span><span style="color:#888;">54 clicks</span></div>
-      <div class="table-row"><span class="link-cell">snip.lk/portfolio</span><span style="color:#888;">31 clicks</span></div>
-    </div>
+      </div>
   </div>
 </main>
 
@@ -168,11 +158,12 @@
 </footer>
 
 <script>
-  // --- EXISTING CHART SCRIPT ---
+  // --- 1. EXISTING CHART SCRIPT ---
   const bars = [120,180,140,220,190,260,300,210,280,330,290,250,310,350,270,320,380,290,400,360,310,420,380,340,460,390,350,480,410,440];
   const max = Math.max(...bars);
   const chart = document.getElementById('barChart');
   const labels = ['1','','','','5','','','','','10','','','','','15','','','','','20','','','','','25','','','','','30'];
+  
   bars.forEach((v, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'bar-wrap';
@@ -188,7 +179,7 @@
     chart.appendChild(wrap);
   });
 
-  // --- NEW TOP LINKS SCRIPT ---
+  // --- 2. DYNAMIC TOP LINKS ---
   const mockTopLinks = [
     { alias: 'x8fQr2', clicks: 1204 },
     { alias: 'fig-ds', clicks: 382 },
@@ -202,7 +193,6 @@
     if (!container) return;
 
     let html = '<div class="table-header">Top links</div>';
-
     mockTopLinks.forEach(link => {
       html += `
         <div class="table-row">
@@ -211,9 +201,24 @@
         </div>
       `;
     });
-
     container.innerHTML = html;
   }
+
+  // --- 3. INTERACTIVE TIME FILTERS ---
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Manage active state
+      filterBtns.forEach(b => b.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+
+      // Randomize stats visually to simulate new data loading
+      document.getElementById('val-clicks').innerText = Math.floor(Math.random() * 15000 + 1000).toLocaleString();
+      document.getElementById('val-links').innerText = Math.floor(Math.random() * 300 + 50).toLocaleString();
+      document.getElementById('val-visitors').innerText = Math.floor(Math.random() * 10000 + 500).toLocaleString();
+      document.getElementById('val-ctr').innerText = Math.floor(Math.random() * 60 + 20) + '%';
+    });
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     renderTopLinks();

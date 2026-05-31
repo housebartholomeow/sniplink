@@ -39,7 +39,7 @@
   .result-header { font-size: 12px; color: #888; margin-bottom: 8px; }
   .result-row { display: flex; align-items: center; gap: 8px; }
   .short-url { font-size: 16px; font-weight: 500; color: #185fa5; flex: 1; }
-  .action-btn { height: 32px; padding: 0 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #333; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
+  .action-btn { height: 32px; padding: 0 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #333; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; transition: all 0.2s; }
   .action-btn:hover { border-color: #aaa; }
   .original-url { font-size: 12px; color: #888; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -59,7 +59,7 @@
   .orig { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .short { color: #185fa5; font-weight: 500; }
   .row-actions { display: flex; gap: 8px; }
-  .icon-btn { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; padding: 2px; line-height: 1; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; padding: 2px; line-height: 1; transition: color 0.2s; }
   .icon-btn:hover { color: #1a1a1a; }
 
   footer { border-top: 1px solid #e0e0e0; background: #fff; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
@@ -78,9 +78,6 @@
   </a>
   <div class="nav-links">
     <a class="nav-link" href="analytics.html">Analytics</a>
-    <a class="nav-link" href="pricing.html">Pricing</a>
-    <a class="nav-link btn-outline" href="login.html">Log in</a>
-    <a class="btn-primary" href="signup.html">Sign up free</a>
   </div>
 </nav>
 
@@ -97,7 +94,7 @@
     <label><input type="checkbox" /> Remove tracking params</label>
     <div style="display:flex;align-items:center;gap:6px;">
       <span>Custom alias:</span>
-      <input class="alias-input" type="text" placeholder="my-link" />
+      <input class="alias-input" type="text" placeholder="my-link" id="customAlias" />
     </div>
     <label><input type="checkbox" /> Password protect</label>
   </div>
@@ -107,9 +104,9 @@
   <div class="result-card">
     <div class="result-header">Your shortened link is ready</div>
     <div class="result-row">
-	<span class="short-url">https://snip.lk/x8fQr2</span>
-	<button class="action-btn"><i class="ti ti-copy"></i> Copy</button>
-	</div>
+      <span class="short-url" id="generatedShortUrl"></span>
+      <button class="action-btn" id="mainCopyBtn"><i class="ti ti-copy"></i> Copy</button>
+    </div>
     <div class="original-url" id="orig-url">Original: —</div>
   </div>
 </div>
@@ -119,8 +116,8 @@
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-label">Total links</div>
-      <div class="stat-value">142</div>
-      <div class="stat-sub">+12 this week</div>
+      <div class="stat-value" id="stat-links">0</div>
+      <div class="stat-sub">Updated dynamically</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Total clicks</div>
@@ -142,50 +139,8 @@
 
 <div class="section" style="margin-top:2rem;">
   <div class="section-label">Recent links</div>
-  <div class="history-table">
-    <div class="history-header">
-      <span>Original URL</span>
-      <span>Short link</span>
-      <span>Clicks</span>
-      <span>Actions</span>
+  <div class="history-table" id="history-container">
     </div>
-    <div class="history-row">
-      <span class="orig">https://docs.google.com/spreadsheets/d/1BxiMFyTCJPe4...</span>
-      <span class="short">snip.lk/x8fQr2</span>
-      <span>1,204</span>
-      <div class="row-actions">
-        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
-        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="history-row">
-      <span class="orig">https://www.figma.com/file/XkQ9z3HzP0dQ8w/Design-System</span>
-      <span class="short">snip.lk/fig-ds</span>
-      <span>382</span>
-      <div class="row-actions">
-        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
-        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="history-row">
-      <span class="orig">https://www.notion.so/team/project-roadmap-q2-2026</span>
-      <span class="short">snip.lk/roadmap</span>
-      <span>97</span>
-      <div class="row-actions">
-        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
-        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="history-row">
-      <span class="orig">https://calendar.google.com/calendar/r/eventedit?text=...</span>
-      <span class="short">snip.lk/meetQ2</span>
-      <span>54</span>
-      <div class="row-actions">
-        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
-        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <footer>
@@ -193,49 +148,137 @@
 </footer>
 
 <script>
+  const STORAGE_KEY = 'sniplink_history';
+  let historyData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+  // 1. Initial Render on Page Load
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHistoryTable();
+  });
+
+  // 2. Handle the Form Submission & Validation
   function showResult() {
     const urlInput = document.getElementById('urlInput');
+    const customAlias = document.getElementById('customAlias').value.trim();
     const resultDiv = document.getElementById('result');
-    const origUrl = document.getElementById('orig-url');
+    const origUrlEl = document.getElementById('orig-url');
+    const shortUrlEl = document.getElementById('generatedShortUrl');
     const shortenBtn = document.querySelector('.shorten-btn');
-    const aliasInput = document.querySelector('.alias-input');
     
     const inputValue = urlInput.value.trim();
 
-    // 1. Client-Side Validation
     if (!inputValue) {
-      urlInput.style.borderColor = '#b91c1c'; // Highlight input in red
+      urlInput.style.borderColor = '#b91c1c';
       urlInput.setAttribute('placeholder', 'Please enter a valid URL!');
-      return; // Stop execution
+      return;
     }
 
-    // Reset styles if validation passes
     urlInput.style.borderColor = '#ccc';
-
-    // 2. Mock a loading state (simulating a backend request)
     const originalBtnText = shortenBtn.innerHTML;
     shortenBtn.innerHTML = '<i class="ti ti-loader"></i> Shortening...';
-    shortenBtn.disabled = true; // Prevent double-clicking
+    shortenBtn.disabled = true;
 
+    // Simulate network request
     setTimeout(() => {
-      // 3. Update the UI with the result
-      origUrl.textContent = 'Original: ' + inputValue;
+      const alias = customAlias || Math.random().toString(36).substring(2, 8);
+      const shortDomain = `snip.lk/${alias}`;
+      
+      // Update result card
+      origUrlEl.textContent = 'Original: ' + inputValue;
+      shortUrlEl.textContent = 'https://' + shortDomain;
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Reset the button
+      // Save to localStorage
+      historyData.unshift({ orig: inputValue, short: shortDomain, clicks: 0 });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
+      
+      renderHistoryTable();
+
+      // Reset button and input
       shortenBtn.innerHTML = originalBtnText;
       shortenBtn.disabled = false;
+      urlInput.value = '';
+    }, 600);
+  }
 
-      // 4. Log the payload you will eventually send to Node.js
-      const payload = {
-        originalUrl: inputValue,
-        customAlias: aliasInput.value.trim(),
-        // You can add logic to check the status of the checkboxes here too
-      };
-      console.log("Ready to send to backend:", payload);
+  // 3. Render the History Table dynamically
+  function renderHistoryTable() {
+    const container = document.getElementById('history-container');
+    document.getElementById('stat-links').textContent = historyData.length;
 
-    }, 600); // 600ms fake delay
+    let html = `
+      <div class="history-header">
+        <span>Original URL</span>
+        <span>Short link</span>
+        <span>Clicks</span>
+        <span>Actions</span>
+      </div>
+    `;
+
+    if (historyData.length === 0) {
+      html += `<div class="history-row" style="grid-template-columns: 1fr; text-align: center; color: #888;">No recent links found. Create one above!</div>`;
+    } else {
+      historyData.forEach((item, index) => {
+        html += `
+          <div class="history-row">
+            <span class="orig" title="${item.orig}">${item.orig}</span>
+            <span class="short">${item.short}</span>
+            <span>${item.clicks}</span>
+            <div class="row-actions">
+              <button class="icon-btn copy-btn" data-url="https://${item.short}" title="Copy"><i class="ti ti-copy"></i></button>
+              <button class="icon-btn delete-btn" data-index="${index}" title="Delete"><i class="ti ti-trash"></i></button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    container.innerHTML = html;
+    attachEventListeners();
+  }
+
+  // 4. Attach Copy and Delete functionality
+  function attachEventListeners() {
+    // History Table Copy Buttons
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const url = e.currentTarget.getAttribute('data-url');
+        copyToClipboard(url, e.currentTarget);
+      });
+    });
+
+    // History Table Delete Buttons
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = e.currentTarget.getAttribute('data-index');
+        historyData.splice(index, 1);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
+        renderHistoryTable();
+      });
+    });
+  }
+
+  // 5. Main Result Card Copy Button
+  document.getElementById('mainCopyBtn').addEventListener('click', function() {
+    const textToCopy = document.getElementById('generatedShortUrl').textContent;
+    copyToClipboard(textToCopy, this, true);
+  });
+
+  // Utility copy function
+  function copyToClipboard(text, buttonElement, hasText = false) {
+    navigator.clipboard.writeText(text).then(() => {
+      const originalHTML = buttonElement.innerHTML;
+      if (hasText) {
+        buttonElement.innerHTML = '<i class="ti ti-check" style="color: #0f6e56;"></i> Copied!';
+      } else {
+        buttonElement.innerHTML = '<i class="ti ti-check" style="color: #0f6e56;"></i>';
+      }
+      
+      setTimeout(() => {
+        buttonElement.innerHTML = originalHTML;
+      }, 2000);
+    });
   }
 </script>
 </body>
