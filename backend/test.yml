@@ -1,0 +1,11 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 500 # Simulating the normal write load
+scenarios:
+  - flow:
+      - post:
+          url: "/api/shorten"
+          json:
+            originalURL: "https://nodejs.org/learn/getting-started/an-introduction-to-the-npm-package-manager"
