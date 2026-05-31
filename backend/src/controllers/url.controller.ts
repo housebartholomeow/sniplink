@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { db } from '../db/db.ts';
 import { urls } from '../db/schema.ts';
-import { encodeId } from '../utils/base62.ts';
+import { generateShortCode } from '../utils/base62.ts';
 
 export const shortenUrl = async (req: Request, res: Response) => {
   try {
@@ -28,32 +28,19 @@ export const shortenUrl = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Insert, Encode, and Update using a Transaction
-    const finalUrl = await db.transaction(async (tx) => {
-      // Step A: Insert with a temporary unique string to satisfy the `.notNull()` constraint
-      const tempCode = `temp_${crypto.randomUUID()}`;
-      
-      const [insertedRow] = await tx.insert(urls).values({
-        originalURL,
-        shortCode: tempCode
-      }).returning({ id: urls.id });
+    // 1. Generate the ID in memory (No database interaction yet)
+    const shortCode = generateShortCode(6);
 
-      // Step B: Encode the auto-incremented ID
-      const generatedShortCode = encodeId(insertedRow.id);
+    // 2. Perform a single INSERT operation
+    const [insertedRow] = await db.insert(urls).values({
+      originalURL,
+      shortCode
+    }).returning({ shortCode: urls.shortCode });
 
-      // Step C: Update the row with the actual Base62 short code
-      const [updatedRow] = await tx.update(urls)
-        .set({ shortCode: generatedShortCode })
-        .where(eq(urls.id, insertedRow.id))
-        .returning({ shortCode: urls.shortCode });
-
-      return updatedRow;
-    });
-
-    // 4. Return success response
+    // 3. Return success response
     return res.status(201).json({
-      shortUrl: `http://localhost:3000/${finalUrl.shortCode}`, // Replace with your actual domain
-      shortCode: finalUrl.shortCode,
+      shortUrl: `http://localhost:3000/${insertedRow.shortCode}`, 
+      shortCode: insertedRow.shortCode,
       originalURL
     });
 

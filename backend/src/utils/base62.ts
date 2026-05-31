@@ -1,16 +1,13 @@
-const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const BASE = ALPHABET.length;
+import crypto from 'crypto';
 
-export function encodeId(id: number): string {
-  if (id === 0) return ALPHABET[0];
-  
-  let shortString = "";
-  let num = id;
-  
-  while (num > 0) {
-    shortString = ALPHABET[num % BASE] + shortString;
-    num = Math.floor(num / BASE);
+// Generates a secure, random Base62 string in memory
+export function generateShortCode(length: number = 6): string {
+  const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    // crypto.randomInt ensures cryptographically secure randomness
+    const randomIndex = crypto.randomInt(0, ALPHABET.length); 
+    result += ALPHABET[randomIndex];
   }
-  
-  return shortString;
+  return result;
 }
