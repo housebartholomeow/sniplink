@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sniplink — Free URL Shortener</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "DM Sans", sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; display: flex; flex-direction: column; }
+  a { text-decoration: none; color: inherit; }
+
+  .nav { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-weight: 600; font-size: 17px; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+  .nav-logo-icon { width: 30px; height: 30px; background: #e6f1fb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #185fa5; font-size: 16px; }
+  .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-link { font-size: 14px; color: #666; }
+  .nav-link:hover { color: #1a1a1a; }
+  .btn-primary { background: #185fa5; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-primary:hover { background: #0c447c; }
+  .btn-outline { background: transparent; color: #185fa5; border: 1px solid #185fa5; padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; }
+  .btn-outline:hover { background: #e6f1fb; }
+
+  .hero { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 3rem 2rem 2.5rem; text-align: center; }
+  .hero h1 { font-size: 28px; font-weight: 600; color: #1a1a1a; margin-bottom: 0.5rem; }
+  .hero p { font-size: 15px; color: #666; margin-bottom: 2rem; }
+  .input-row { display: flex; gap: 8px; max-width: 640px; margin: 0 auto; }
+  .url-input { flex: 1; height: 44px; padding: 0 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; background: #fafafa; color: #1a1a1a; outline: none; font-family: inherit; }
+  .url-input:focus { border-color: #185fa5; box-shadow: 0 0 0 3px rgba(24,95,165,0.1); }
+  .shorten-btn { height: 44px; padding: 0 20px; background: #185fa5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-family: inherit; }
+  .shorten-btn:hover { background: #0c447c; }
+  .options-row { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 1rem; font-size: 13px; color: #666; flex-wrap: wrap; }
+  .options-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .alias-input { height: 28px; padding: 0 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fafafa; color: #1a1a1a; width: 120px; outline: none; font-family: inherit; }
+
+  .result-wrap { max-width: 640px; margin: 1.5rem auto 0; padding: 0 1.5rem; display: none; }
+  .result-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1rem 1.25rem; }
+  .result-header { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .result-row { display: flex; align-items: center; gap: 8px; }
+  .short-url { font-size: 16px; font-weight: 500; color: #185fa5; flex: 1; }
+  .action-btn { height: 32px; padding: 0 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #333; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
+  .action-btn:hover { border-color: #aaa; }
+  .original-url { font-size: 12px; color: #888; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .section { max-width: 760px; margin: 2.5rem auto 0; padding: 0 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat-card { background: #f0efea; border-radius: 8px; padding: 1rem; }
+  .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+  .stat-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+  .history-table { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; margin-bottom: 3rem; }
+  .history-header { display: grid; grid-template-columns: 2fr 1.2fr 80px 60px; gap: 12px; padding: 10px 16px; background: #f5f5f3; border-bottom: 1px solid #e0e0e0; font-size: 12px; font-weight: 500; color: #888; }
+  .history-row { display: grid; grid-template-columns: 2fr 1.2fr 80px 60px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eee; align-items: center; font-size: 13px; }
+  .history-row:last-child { border-bottom: none; }
+  .history-row:hover { background: #fafafa; }
+  .orig { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .short { color: #185fa5; font-weight: 500; }
+  .row-actions { display: flex; gap: 8px; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; padding: 2px; line-height: 1; }
+  .icon-btn:hover { color: #1a1a1a; }
+
+  footer { border-top: 1px solid #e0e0e0; background: #fff; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .footer-left { font-size: 13px; color: #888; }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-link { font-size: 13px; color: #888; }
+  .footer-link:hover { color: #1a1a1a; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="sniplink.html">
+    <div class="nav-logo-icon"><i class="ti ti-link"></i></div>
+    Sniplink
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="analytics.html">Analytics</a>
+    <a class="nav-link" href="pricing.html">Pricing</a>
+    <a class="nav-link btn-outline" href="login.html">Log in</a>
+    <a class="btn-primary" href="signup.html">Sign up free</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Shorten, share, and track your links</h1>
+  <p>Paste a long URL below to create a short, shareable link in seconds.</p>
+  <div class="input-row">
+    <input class="url-input" type="text" placeholder="Paste your long URL here..." id="urlInput" />
+    <button class="shorten-btn" onclick="showResult()">
+      <i class="ti ti-scissors"></i> Shorten URL
+    </button>
+  </div>
+  <div class="options-row">
+    <label><input type="checkbox" /> Remove tracking params</label>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span>Custom alias:</span>
+      <input class="alias-input" type="text" placeholder="my-link" />
+    </div>
+    <label><input type="checkbox" /> Password protect</label>
+  </div>
+</div>
+
+<div class="result-wrap" id="result">
+  <div class="result-card">
+    <div class="result-header">Your shortened link is ready</div>
+    <div class="result-row">
+	<span class="short-url">https://snip.lk/x8fQr2</span>
+	<button class="action-btn"><i class="ti ti-copy"></i> Copy</button>
+	</div>
+    <div class="original-url" id="orig-url">Original: —</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:2.5rem;">
+  <div class="section-label">Your stats this month</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total links</div>
+      <div class="stat-value">142</div>
+      <div class="stat-sub">+12 this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total clicks</div>
+      <div class="stat-value">8,431</div>
+      <div class="stat-sub">+1,204 this week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Top country</div>
+      <div class="stat-value" style="font-size:15px;padding-top:4px;">🇮🇩 Indonesia</div>
+      <div class="stat-sub">34% of traffic</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg click-through</div>
+      <div class="stat-value">59<span style="font-size:14px;">%</span></div>
+      <div class="stat-sub">vs 48% last month</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:2rem;">
+  <div class="section-label">Recent links</div>
+  <div class="history-table">
+    <div class="history-header">
+      <span>Original URL</span>
+      <span>Short link</span>
+      <span>Clicks</span>
+      <span>Actions</span>
+    </div>
+    <div class="history-row">
+      <span class="orig">https://docs.google.com/spreadsheets/d/1BxiMFyTCJPe4...</span>
+      <span class="short">snip.lk/x8fQr2</span>
+      <span>1,204</span>
+      <div class="row-actions">
+        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
+        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="history-row">
+      <span class="orig">https://www.figma.com/file/XkQ9z3HzP0dQ8w/Design-System</span>
+      <span class="short">snip.lk/fig-ds</span>
+      <span>382</span>
+      <div class="row-actions">
+        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
+        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="history-row">
+      <span class="orig">https://www.notion.so/team/project-roadmap-q2-2026</span>
+      <span class="short">snip.lk/roadmap</span>
+      <span>97</span>
+      <div class="row-actions">
+        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
+        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="history-row">
+      <span class="orig">https://calendar.google.com/calendar/r/eventedit?text=...</span>
+      <span class="short">snip.lk/meetQ2</span>
+      <span>54</span>
+      <div class="row-actions">
+        <button class="icon-btn" title="Copy"><i class="ti ti-copy"></i></button>
+        <button class="icon-btn" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left">© 2026 Sniplink — Free URL shortener</div>
+</footer>
+
+<script>
+  function showResult() {
+    const urlInput = document.getElementById('urlInput');
+    const resultDiv = document.getElementById('result');
+    const origUrl = document.getElementById('orig-url');
+    const shortenBtn = document.querySelector('.shorten-btn');
+    const aliasInput = document.querySelector('.alias-input');
+    
+    const inputValue = urlInput.value.trim();
+
+    // 1. Client-Side Validation
+    if (!inputValue) {
+      urlInput.style.borderColor = '#b91c1c'; // Highlight input in red
+      urlInput.setAttribute('placeholder', 'Please enter a valid URL!');
+      return; // Stop execution
+    }
+
+    // Reset styles if validation passes
+    urlInput.style.borderColor = '#ccc';
+
+    // 2. Mock a loading state (simulating a backend request)
+    const originalBtnText = shortenBtn.innerHTML;
+    shortenBtn.innerHTML = '<i class="ti ti-loader"></i> Shortening...';
+    shortenBtn.disabled = true; // Prevent double-clicking
+
+    setTimeout(() => {
+      // 3. Update the UI with the result
+      origUrl.textContent = 'Original: ' + inputValue;
+      resultDiv.style.display = 'block';
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Reset the button
+      shortenBtn.innerHTML = originalBtnText;
+      shortenBtn.disabled = false;
+
+      // 4. Log the payload you will eventually send to Node.js
+      const payload = {
+        originalUrl: inputValue,
+        customAlias: aliasInput.value.trim(),
+        // You can add logic to check the status of the checkboxes here too
+      };
+      console.log("Ready to send to backend:", payload);
+
+    }, 600); // 600ms fake delay
+  }
+</script>
+</body>
+</html>
