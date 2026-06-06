@@ -4,8 +4,12 @@ import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { shortenUrl, redirectUrl } from './controllers/url.controller.ts';
 import { redisClient } from './db/redis.ts';
+import { checkAndRefillPool } from './services/kgs.service.ts';
+import { connectKafka } from './services/kafka.service.ts';
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(cors())
 
@@ -32,7 +36,9 @@ app.post('/api/shorten', shortenUrl);
 // 2. Route to handle the redirect (e.g., localhost:3000/sBc)
 app.get('/:shortCode', redirectUrl);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+Promise.all([checkAndRefillPool(), connectKafka()]).then(() => {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 });

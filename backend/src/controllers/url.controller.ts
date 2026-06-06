@@ -3,10 +3,13 @@ import { eq } from 'drizzle-orm';
 import { redisClient } from '../db/redis.ts';
 import { db } from '../db/db.ts';
 import { urls } from '../db/schema.ts';
-import { generateShortCode } from '../utils/base62.ts';
+import { getShortCodeFromKGS } from '../services/kgs.service.ts';
+import { publishClickEvent } from '../services/kafka.service.ts';
 
 export const shortenUrl = async (req: Request, res: Response) => {
   try {
+    console.log(`Processed by container ID: ${process.env.HOSTNAME}`);
+    
     const { originalURL } = req.body;
 
     if (!originalURL || typeof originalURL !== 'string') {
@@ -28,8 +31,7 @@ export const shortenUrl = async (req: Request, res: Response) => {
       });
     }
 
-    // in-memory ID
-    const shortCode = generateShortCode(6);
+    const shortCode = await getShortCodeFromKGS();
 
     // inserts original URL and generated short code to make shortened URL
     const [insertedRow] = await db.insert(urls).values({
@@ -66,6 +68,10 @@ export const redirectUrl = async (req: Request, res: Response) => {
     if (cachedUrl) {
       console.log("Cache Hit.")
       console.timeEnd(`LookupTime-${shortCode}`);
+
+      // Fire the asynchronous event
+      publishClickEvent(shortCode, req.get('User-Agent'), req.ip);
+
       return res.redirect(cachedUrl);
     }
     
@@ -83,8 +89,11 @@ export const redirectUrl = async (req: Request, res: Response) => {
     }
 
     await redisClient.setEx(`url:${shortCode}`, 86400, urlRecord.originalURL);
-
     console.timeEnd(`LookupTime-${shortCode}`);
+
+    // Fire the asynchronous event
+    publishClickEvent(shortCode, req.get('User-Agent'), req.ip);
+
     return res.redirect(urlRecord.originalURL);
 
   } catch (error) {
