@@ -27,13 +27,15 @@ services:
     build: .
     depends_on:
       - kafka
+      - pgbouncer
+      - redis # Add this dependency
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@pgbouncer:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379 # Update this to point to the new container
       - KAFKA_BROKER=kafka:29092
       - PORT=3000
     deploy:
-      replicas: 3 # Scales the monolith to 3 concurrent instances
+      replicas: 3
 
   nginx:
     image: nginx:alpine
@@ -43,3 +45,18 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
+      
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      # PgBouncer looks at this URL to know where the actual database is
+      - DATABASE_URL=${PGBOUNCER_URL}
+      - POOL_MODE=transaction
+      - IGNORE_STARTUP_PARAMETERS=extra_float_digits
+    ports:
+      - "6432:5432"
+  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
