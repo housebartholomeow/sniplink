@@ -6,7 +6,7 @@ export const urls = pgTable ("urls", {
     originalURL: text("original_url").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow()
 }, (table) => {
-    // This creates a B-tree index on the shortCode column
+    // creates a B-tree index on the shortCode column
     return {
         shortCodeIdx: index("short_code_idx").on(table.shortCode),
     };

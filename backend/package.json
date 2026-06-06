@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/express-rate-limit": "^5.1.3",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.22.4",
@@ -24,6 +25,10 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "pg": "^8.21.0"
+    "express-rate-limit": "^8.5.2",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.21.0",
+    "rate-limit-redis": "^5.0.0",
+    "redis": "^6.0.0"
   }
 }

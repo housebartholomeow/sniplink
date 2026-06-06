@@ -1,12 +1,15 @@
 import type { Request, Response } from 'express';
 import { eq } from 'drizzle-orm';
-import crypto from 'crypto';
+import { redisClient } from '../db/redis.ts';
 import { db } from '../db/db.ts';
 import { urls } from '../db/schema.ts';
-import { generateShortCode } from '../utils/base62.ts';
+import { getShortCodeFromKGS } from '../services/kgs.service.ts';
+import { publishClickEvent } from '../services/kafka.service.ts';
 
 export const shortenUrl = async (req: Request, res: Response) => {
   try {
+    console.log(`Processed by container ID: ${process.env.HOSTNAME}`);
+    
     const { originalURL } = req.body;
 
     if (!originalURL || typeof originalURL !== 'string') {
@@ -28,16 +31,15 @@ export const shortenUrl = async (req: Request, res: Response) => {
       });
     }
 
-    // 1. Generate the ID in memory (No database interaction yet)
-    const shortCode = generateShortCode(6);
+    const shortCode = await getShortCodeFromKGS();
 
-    // 2. Perform a single INSERT operation
+    // inserts original URL and generated short code to make shortened URL
     const [insertedRow] = await db.insert(urls).values({
       originalURL,
       shortCode
     }).returning({ shortCode: urls.shortCode });
 
-    // 3. Return success response
+    // short URL successfully created
     return res.status(201).json({
       shortUrl: `http://localhost:3000/${insertedRow.shortCode}`, 
       shortCode: insertedRow.shortCode,
@@ -54,12 +56,27 @@ export const redirectUrl = async (req: Request, res: Response) => {
   try {
     const { shortCode } = req.params; // or req.query, depending on your setup
 
-    // 1. Type Guard: Ensure shortCode is exactly a single string
+    // ensures shortCode is exactly a single string
     if (typeof shortCode !== 'string') {
       return res.status(400).json({ error: "Invalid short code format." });
     }
 
-    // 2. Look up the shortCode (TypeScript now guarantees shortCode is a string!)
+    console.time(`LookupTime-${shortCode}`);
+
+    // checks Redis using cache-aside pattern
+    const cachedUrl = await redisClient.get(`url:${shortCode}`);
+    if (cachedUrl) {
+      console.log("Cache Hit.")
+      console.timeEnd(`LookupTime-${shortCode}`);
+
+      // Fire the asynchronous event
+      publishClickEvent(shortCode, req.get('User-Agent'), req.ip);
+
+      return res.redirect(cachedUrl);
+    }
+    
+    // looks in database if cache miss
+    console.log("Cache miss-fetching from database.")
     const [urlRecord] = await db
       .select()
       .from(urls)
@@ -67,8 +84,15 @@ export const redirectUrl = async (req: Request, res: Response) => {
       .limit(1);
 
     if (!urlRecord) {
+      console.timeEnd(`LookupTime-${shortCode}`);
       return res.status(404).json({ error: "URL not found." });
     }
+
+    await redisClient.setEx(`url:${shortCode}`, 86400, urlRecord.originalURL);
+    console.timeEnd(`LookupTime-${shortCode}`);
+
+    // Fire the asynchronous event
+    publishClickEvent(shortCode, req.get('User-Agent'), req.ip);
 
     return res.redirect(urlRecord.originalURL);
 
