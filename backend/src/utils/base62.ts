@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-// Generates a secure, random Base62 string in memory
+// generates a secure, random Base62 string in memory
 export function generateShortCode(length: number = 6): string {
   const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let result = "";
