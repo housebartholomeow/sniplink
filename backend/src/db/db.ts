@@ -10,7 +10,7 @@ const { Pool } = pkg;
 
 // initialize the pg Connection Pool using the existing DATABASE_URL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.PGBOUNCER_URL,
 });
 
 // export the Drizzle DB instance so the controllers can import it

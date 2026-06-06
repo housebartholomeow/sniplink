@@ -9,6 +9,8 @@ import { connectKafka } from './services/kafka.service.ts';
 
 const app = express();
 
+const PORT = process.env.PORT || 3000;
+
 app.set('trust proxy', 1);
 
 app.use(cors())
@@ -36,9 +38,16 @@ app.post('/api/shorten', shortenUrl);
 // 2. Route to handle the redirect (e.g., localhost:3000/sBc)
 app.get('/:shortCode', redirectUrl);
 
-Promise.all([checkAndRefillPool(), connectKafka()]).then(() => {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
+
+  // 2. Connect to external services in the background
+  Promise.all([checkAndRefillPool(), connectKafka()])
+    .then(() => {
+      console.log('All external services connected successfully');
+    })
+    .catch((error) => {
+      // Prevents the container from crashing if a service is temporarily down
+      console.error('Failed to connect external services on startup:', error);
+    });
 });

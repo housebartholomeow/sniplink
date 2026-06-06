@@ -25,7 +25,7 @@ export const shortenUrl = async (req: Request, res: Response) => {
     const [existing] = await db.select().from(urls).where(eq(urls.originalURL, originalURL)).limit(1);
     if (existing) {
       return res.status(200).json({
-        shortUrl: `http://localhost:3000/${existing.shortCode}`,
+        shortUrl: `${req.protocol}://${req.get('host')}/${existing.shortCode}`,
         shortCode: existing.shortCode,
         originalURL: existing.originalURL
       });
