@@ -157,50 +157,66 @@
   });
 
   // 2. Handle the Form Submission & Validation
-  function showResult() {
-    const urlInput = document.getElementById('urlInput');
-    const customAlias = document.getElementById('customAlias').value.trim();
-    const resultDiv = document.getElementById('result');
-    const origUrlEl = document.getElementById('orig-url');
-    const shortUrlEl = document.getElementById('generatedShortUrl');
-    const shortenBtn = document.querySelector('.shorten-btn');
-    
-    const inputValue = urlInput.value.trim();
+async function showResult() {
+  const urlInput = document.getElementById('urlInput');
+  const resultDiv = document.getElementById('result');
+  const origUrlEl = document.getElementById('orig-url');
+  const shortUrlEl = document.getElementById('generatedShortUrl');
+  const shortenBtn = document.querySelector('.shorten-btn');
+  
+  const inputValue = urlInput.value.trim();
 
-    if (!inputValue) {
-      urlInput.style.borderColor = '#b91c1c';
-      urlInput.setAttribute('placeholder', 'Please enter a valid URL!');
-      return;
+  if (!inputValue) {
+    urlInput.style.borderColor = '#b91c1c';
+    urlInput.setAttribute('placeholder', 'Please enter a valid URL!');
+    return;
+  }
+
+  urlInput.style.borderColor = '#ccc';
+  const originalBtnText = shortenBtn.innerHTML;
+  shortenBtn.innerHTML = '<i class="ti ti-loader"></i> Shortening...';
+  shortenBtn.disabled = true;
+
+  try {
+    // 1. Make the actual API call to your backend
+    const response = await fetch('http://localhost:3000/api/shorten', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ originalURL: inputValue })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to shorten URL');
     }
 
-    urlInput.style.borderColor = '#ccc';
-    const originalBtnText = shortenBtn.innerHTML;
-    shortenBtn.innerHTML = '<i class="ti ti-loader"></i> Shortening...';
-    shortenBtn.disabled = true;
+    // 2. Update the UI with the real data from the backend
+    origUrlEl.textContent = 'Original: ' + data.originalURL;
+    shortUrlEl.textContent = data.shortUrl;
+    
+    resultDiv.style.display = 'block';
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    // Simulate network request
-    setTimeout(() => {
-      const alias = customAlias || Math.random().toString(36).substring(2, 8);
-      const shortDomain = `snip.lk/${alias}`;
-      
-      // Update result card
-      origUrlEl.textContent = 'Original: ' + inputValue;
-      shortUrlEl.textContent = 'https://' + shortDomain;
-      resultDiv.style.display = 'block';
-      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // 3. Save to localStorage for the history table
+    // (Note: we strip 'http://' for the history display to match your previous design)
+    const displayShort = data.shortUrl.replace(/^https?:\/\//, '');
+    historyData.unshift({ orig: data.originalURL, short: displayShort, clicks: 0 });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
+    
+    renderHistoryTable();
+    urlInput.value = '';
 
-      // Save to localStorage
-      historyData.unshift({ orig: inputValue, short: shortDomain, clicks: 0 });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
-      
-      renderHistoryTable();
-
-      // Reset button and input
-      shortenBtn.innerHTML = originalBtnText;
-      shortenBtn.disabled = false;
-      urlInput.value = '';
-    }, 600);
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    // Reset button
+    shortenBtn.innerHTML = originalBtnText;
+    shortenBtn.disabled = false;
   }
+}
 
   // 3. Render the History Table dynamically
   function renderHistoryTable() {
