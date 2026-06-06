@@ -25,7 +25,7 @@ export const shortenUrl = async (req: Request, res: Response) => {
     const [existing] = await db.select().from(urls).where(eq(urls.originalURL, originalURL)).limit(1);
     if (existing) {
       return res.status(200).json({
-        shortUrl: `${req.protocol}://${req.get('host')}/${existing.shortCode}`,
+        shortUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/${existing.shortCode}`,
         shortCode: existing.shortCode,
         originalURL: existing.originalURL
       });
@@ -41,7 +41,7 @@ export const shortenUrl = async (req: Request, res: Response) => {
 
     // short URL successfully created
     return res.status(201).json({
-      shortUrl: `http://localhost:3000/${insertedRow.shortCode}`, 
+      shortUrl: `${process.env.BASE_URL || 'http://localhost:3000'}/${insertedRow.shortCode}`, 
       shortCode: insertedRow.shortCode,
       originalURL
     });

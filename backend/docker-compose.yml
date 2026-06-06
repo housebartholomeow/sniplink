@@ -28,19 +28,20 @@ services:
     depends_on:
       - kafka
       - pgbouncer
-      - redis # Add this dependency
+      - redis
     environment:
-      - DATABASE_URL=DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@pgbouncer:5432/${DB_NAME}
-      - REDIS_URL=redis://redis:6379 # Update this to point to the new container
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@pgbouncer:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379
       - KAFKA_BROKER=kafka:29092
       - PORT=3000
+      - BASE_URL=${BASE_URL}
     deploy:
       replicas: 3
 
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80" # The main entry point for the load balancer
+      - "8080:80" # The main entry point for the load balancer
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
