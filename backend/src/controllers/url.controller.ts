@@ -54,10 +54,6 @@ export const redirectUrl = async (req: Request, res: Response) => {
   try {
     const { shortCode } = req.params; // or req.query, depending on your setup
 
-    if (shortCode === 'favicon.ico') {
-      return res.status(204).end(); 
-    }
-
     // ensures shortCode is exactly a single string
     if (typeof shortCode !== 'string') {
       return res.status(400).json({ error: "Invalid short code format." });

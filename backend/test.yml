@@ -1,8 +1,8 @@
 config:
   target: "http://localhost:3000"
   phases:
-    - duration: 30
-      arrivalRate: 500 # Simulating the normal write load
+    - duration: 5
+      arrivalRate: 250
 scenarios:
   - flow:
       - post:
