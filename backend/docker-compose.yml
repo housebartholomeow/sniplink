@@ -60,5 +60,6 @@ services:
   
   redis:
     image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --enable-debug-command yes
     ports:
       - "6379:6379"

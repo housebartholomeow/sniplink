@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors'
 import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
-import { shortenUrl, redirectUrl } from './controllers/url.controller.ts';
+import { shortenUrl, redirectUrl, getAnalytics, deleteUrl } from './controllers/url.controller.ts';
 import { redisClient } from './db/redis.ts';
 import { checkAndRefillPool } from './services/kgs.service.ts';
 import { connectKafka } from './services/kafka.service.ts';
@@ -37,6 +37,12 @@ app.post('/api/shorten', shortenUrl);
 
 // 2. Route to handle the redirect (e.g., localhost:3000/sBc)
 app.get('/:shortCode', redirectUrl);
+
+// 3. Route to fetch all links for analytics
+app.get('/api/links', getAnalytics);
+
+// 4. Route to delete link for invalidate on write
+app.delete('/api/links/:shortCode', deleteUrl);
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

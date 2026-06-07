@@ -47,8 +47,8 @@
   /* stats-grid and related stat-card styles removed — no "Your stats this month" section */
 
   .history-table { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; margin-bottom: 3rem; }
-  .history-header { display: grid; grid-template-columns: 2fr 1.2fr 80px 60px; gap: 12px; padding: 10px 16px; background: #f5f5f3; border-bottom: 1px solid #e0e0e0; font-size: 12px; font-weight: 500; color: #888; }
-  .history-row { display: grid; grid-template-columns: 2fr 1.2fr 80px 60px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eee; align-items: center; font-size: 13px; }
+  .history-header { display: grid; grid-template-columns: 2fr 1.2fr 100px 50px; gap: 12px; padding: 10px 16px; background: #f5f5f3; border-bottom: 1px solid #e0e0e0; font-size: 12px; font-weight: 500; color: #888; }
+  .history-row { display: grid; grid-template-columns: 2fr 1.2fr 100px 50px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eee; align-items: center; font-size: 13px; }
   .history-row:last-child { border-bottom: none; }
   .history-row:hover { background: #fafafa; }
   .orig { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -83,14 +83,6 @@
       <i class="ti ti-scissors"></i> Shorten URL
     </button>
   </div>
-  <div class="options-row">
-    <label><input type="checkbox" id="removeParamsCheckbox" /> Remove tracking params</label>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span>Custom alias:</span>
-      <input class="alias-input" type="text" placeholder="my-link" id="customAlias" />
-    </div>
-    <!-- Password protect option removed completely as requested -->
-  </div>
 </div>
 
 <div class="result-wrap" id="result">
@@ -107,7 +99,7 @@
 <!-- Entire "Your stats this month" section has been removed - no stats grid, no stat cards, no analytics summary in the middle -->
 
 <div class="section" style="margin-top:2rem;">
-  <div class="section-label">Recent links</div>
+  <div class="section-label">Link Analytics</div>
   <div class="history-table" id="history-container">
     </div>
 </div>
@@ -117,45 +109,30 @@
 </footer>
 
 <script>
-  const STORAGE_KEY = 'sniplink_history';
-  let historyData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-
-  // Helper: Remove tracking parameters from URL if option checked
-  function removeTrackingParams(url) {
+  // New function to fetch analytics from the backend
+  async function fetchAnalytics() {
+    const container = document.getElementById('history-container');
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Loading analytics...</div>';
+    
     try {
-      const urlObj = new URL(url);
-      const paramsToRemove = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'ref', 'source', 'tracking_id', 'click_id'];
-      paramsToRemove.forEach(param => urlObj.searchParams.delete(param));
-      let cleanedUrl = urlObj.toString();
-      // Remove trailing '?' if search becomes empty after deletions
-      if (cleanedUrl.endsWith('?')) cleanedUrl = cleanedUrl.slice(0, -1);
-      return cleanedUrl;
-    } catch (e) {
-      return url;
+      // Assumes you have a GET endpoint at /api/links that returns the array of URLs and their click stats
+      const response = await fetch('http://localhost:8080/api/links');
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      
+      const data = await response.json();
+      renderHistoryTable(data);
+    } catch (error) {
+      console.error(error);
+      container.innerHTML = '<div style="padding: 20px; text-align: center; color: #b91c1c;">Error loading link analytics.</div>';
     }
   }
 
-  // Helper: Apply custom alias if provided (append to backend request)
-  // Since the backend endpoint expects only originalURL, we'll adapt: if alias exists we extend the URL to incorporate slug?
-  // Actually according to the original API contract (POST to /api/shorten with { originalURL } ), custom alias would require backend support.
-  // To keep consistent without breaking existing logic, we show a warning if alias is used.
-  // But for UX we can still try to append alias as a query param? Better to notify user that custom alias requires premium? 
-  // The requirement from original design: we keep the alias input but backend currently does not support. 
-  // To improve: we can construct a friendly message or just ignore alias — but we also respect the "remove password protect" — alias left intact.
-  // However, to keep fully functional and demo-friendly, if user provides alias we can append a note but still shorten as usual.
-  // For a seamless experience, we'll still send request with originalURL (or cleaned). If alias field non-empty we show alert that alias feature is coming.
-  // But better to embed alias support? The backend in original code doesn't accept alias; to avoid errors we just note but still shorten.
-  // Because the spec only asks to remove UI elements, not rewrite backend functionality. So I'll keep alias interactive but show a toast message.
-  
-  // Updated showResult with tracking param removal support
   async function showResult() {
     const urlInput = document.getElementById('urlInput');
     const resultDiv = document.getElementById('result');
     const origUrlEl = document.getElementById('orig-url');
     const shortUrlEl = document.getElementById('generatedShortUrl');
     const shortenBtn = document.querySelector('.shorten-btn');
-    const removeParamsCheckbox = document.getElementById('removeParamsCheckbox');
-    const customAliasInput = document.getElementById('customAlias');
     
     let inputValue = urlInput.value.trim();
     if (!inputValue) {
@@ -165,39 +142,6 @@
     }
     urlInput.style.borderColor = '#ccc';
     
-    // Clean tracking parameters if checkbox selected
-    let finalUrl = inputValue;
-    if (removeParamsCheckbox && removeParamsCheckbox.checked) {
-      try {
-        finalUrl = removeTrackingParams(inputValue);
-      } catch (e) {
-        // if URL invalid keep original, validation will happen later
-        finalUrl = inputValue;
-      }
-    }
-    
-    // Alias warning: friendly message without breaking functionality
-    const aliasValue = customAliasInput.value.trim();
-    if (aliasValue !== "") {
-      // Using an unobtrusive style: show temporary notif but still proceed (alias not supported by API)
-      const toastMsg = document.createElement('div');
-      toastMsg.textContent = 'ℹ️ Custom alias support coming soon — using generated short link.';
-      toastMsg.style.position = 'fixed';
-      toastMsg.style.bottom = '20px';
-      toastMsg.style.left = '50%';
-      toastMsg.style.transform = 'translateX(-50%)';
-      toastMsg.style.backgroundColor = '#2c3e50';
-      toastMsg.style.color = '#fff';
-      toastMsg.style.padding = '8px 18px';
-      toastMsg.style.borderRadius = '40px';
-      toastMsg.style.fontSize = '13px';
-      toastMsg.style.zIndex = '1000';
-      toastMsg.style.fontWeight = '500';
-      toastMsg.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      document.body.appendChild(toastMsg);
-      setTimeout(() => toastMsg.remove(), 2800);
-    }
-    
     const originalBtnText = shortenBtn.innerHTML;
     shortenBtn.innerHTML = '<i class="ti ti-loader"></i> Shortening...';
     shortenBtn.disabled = true;
@@ -206,7 +150,7 @@
       const response = await fetch('http://localhost:8080/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originalURL: finalUrl })
+        body: JSON.stringify({ originalURL: inputValue })
       });
       
       const data = await response.json();
@@ -219,19 +163,10 @@
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       
-      // Extract display short: strip protocol for cleaner table view
-      const displayShort = data.shortUrl.replace(/^https?:\/\//, '');
-      // Store into localStorage history
-      historyData.unshift({ 
-        orig: data.originalURL, 
-        short: displayShort, 
-        clicks: 0,
-        fullShortUrl: data.shortUrl 
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
-      renderHistoryTable();
       urlInput.value = '';
-      if (customAliasInput) customAliasInput.value = ''; // reset alias field
+      
+      // Refresh the analytics table after creating a new short URL
+      await fetchAnalytics();
     } catch (error) {
       alert('Shortening error: ' + error.message);
     } finally {
@@ -240,35 +175,37 @@
     }
   }
   
-  // Render history table without stats dependency
-  function renderHistoryTable() {
+  // Render history table strictly using data passed from the backend
+  function renderHistoryTable(data) {
     const container = document.getElementById('history-container');
-    // No stats update reference — we've removed the stats DOM element entirely.
-    // If stat-links element existed it would cause error, but we removed that section so it's fine.
     
     let html = `
       <div class="history-header">
         <span>Original URL</span>
         <span>Short link</span>
-        <span>Clicks</span>
+        <span>Link clicked</span>
         <span>Actions</span>
       </div>
     `;
     
-    if (historyData.length === 0) {
-      html += `<div class="history-row" style="grid-template-columns: 1fr; text-align: center; color: #888;">No recent links found. Create one above!</div>`;
+    if (!data || data.length === 0) {
+      html += `<div class="history-row" style="grid-template-columns: 1fr; text-align: center; color: #888;">No links found. Create one above!</div>`;
     } else {
-      historyData.forEach((item, index) => {
-        // display full short url for copy action
-        const shortForCopy = item.fullShortUrl || `https://${item.short}`;
+      data.forEach((item) => {
+        // Fallbacks account for how your eventual API might structure the returned data
+        const orig = item.originalURL || item.orig;
+        const shortCode = item.shortCode || item.short;
+        const shortUrl = item.shortUrl || item.fullShortUrl || `http://localhost:3000/${shortCode}`;
+        const displayShort = shortUrl.replace(/^https?:\/\//, '');
+        const clicks = item.clicks || 0;
+
         html += `
           <div class="history-row">
-            <span class="orig" title="${escapeHtml(item.orig)}">${truncateUrl(item.orig, 50)}</span>
-            <span class="short">${item.short}</span>
-            <span>${item.clicks || 0}</span>
+            <span class="orig" title="${escapeHtml(orig)}">${truncateUrl(orig, 50)}</span>
+            <span class="short">${displayShort}</span>
+            <span>${clicks}</span>
             <div class="row-actions">
-              <button class="icon-btn copy-btn" data-url="${escapeAttr(shortForCopy)}" title="Copy"><i class="ti ti-copy"></i></button>
-              <button class="icon-btn delete-btn" data-index="${index}" title="Delete"><i class="ti ti-trash"></i></button>
+              <button class="icon-btn copy-btn" data-url="${escapeAttr(shortUrl)}" title="Copy"><i class="ti ti-copy"></i></button>
             </div>
           </div>
         `;
@@ -301,22 +238,12 @@
   }
   
   function attachEventListeners() {
+    // Only attaching the copy button listener now
     document.querySelectorAll('.copy-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const url = e.currentTarget.getAttribute('data-url');
         if (url) copyToClipboard(url, e.currentTarget, false);
         else copyToClipboard('', e.currentTarget, false);
-      });
-    });
-    
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const index = e.currentTarget.getAttribute('data-index');
-        if (index !== null) {
-          historyData.splice(parseInt(index), 1);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
-          renderHistoryTable();
-        }
       });
     });
   }
@@ -353,11 +280,9 @@
     });
   }
   
-  // On load render and also ensure any console errors for non-existing elements are avoided
+  // On load fetch analytics data
   document.addEventListener('DOMContentLoaded', () => {
-    renderHistoryTable();
-    // Ensure any stray event listeners from previous potential double calls are fine.
-    // Also remove any reference to stat-links since DOM element doesn't exist — no error.
+    fetchAnalytics();
   });
 </script>
 </body>
